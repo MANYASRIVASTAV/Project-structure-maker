@@ -26,12 +26,15 @@ Setting up a new project manually is repetitive and error-prone:
 
 This tool automates that entire process safely and efficiently.
 
----
+🚀 Usage
+▶ Normal Execution
+python generate_structure.py
 
-## 🛠 Installation
+Creates the structure safely in the default drive.
 
-No external dependencies required. Requires Python 3.6+.
-
-```bash
-git clone [https://github.com/your-username/project-structure-generator.git](https://github.com/your-username/project-structure-generator.git)
-cd project-structure-generator
+▶ Custom Drive
+python generate_structure.py --drive "C:\\Projects"
+▶ Custom Structure File
+python generate_structure.py --file custom_structure.txt
+▶ Dry Run Mode (Recommended Before First Run)
+python generate_structure.py --dry-run
