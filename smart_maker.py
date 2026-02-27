@@ -1,51 +1,83 @@
-
 import os
+import argparse
+import sys
 
 
-def create_project():
+def create_structure_from_file(file_path, drive, dry_run=False):
+    try:
+        if not os.path.exists(file_path):
+            print(f"❌ Error: '{file_path}' does not exist.")
+            return
 
-    # Get Desktop Path (Windows)
-    desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        with open(file_path, "r") as f:
+            lines = f.readlines()
 
-    project_name = input("Enter project name: ")
+        stack = []
+        root_dir = None
 
-    base_path = os.path.join(desktop_path, project_name)
+        for line in lines:
+            if not line.strip():
+                continue
 
-    os.makedirs(base_path, exist_ok=True)
+            indent = len(line) - len(line.lstrip(" "))
+            name = line.strip()
 
-    print("\nProject folder created on Desktop:", base_path)
+            # Root folder
+            if root_dir is None:
+                root_dir = os.path.join(drive, name.rstrip("/"))
 
+                if dry_run:
+                    print(f"[DRY RUN] 📁 Would create root folder: {root_dir}")
+                else:
+                    os.makedirs(root_dir, exist_ok=True)
+                    print(f"📁 Root folder ready: {root_dir}")
 
-    while True:
+                stack.append((root_dir, indent))
+                continue
 
-        folder = input("\nEnter folder name (or 'done' to finish): ")
+            while stack and stack[-1][1] >= indent:
+                stack.pop()
 
-        if folder.lower() == "done":
-            break
+            parent_path = stack[-1][0]
+            new_path = os.path.join(parent_path, name.rstrip("/"))
 
-        folder_path = os.path.join(base_path, folder)
+            if name.endswith("/"):
+                if dry_run:
+                    print(f"[DRY RUN] 📂 Would create folder: {new_path}")
+                else:
+                    os.makedirs(new_path, exist_ok=True)
+                    print(f"📂 Folder ready: {new_path}")
 
-        os.makedirs(folder_path, exist_ok=True)
+                stack.append((new_path, indent))
 
-        print(" Folder created:", folder)
+            else:
+                if dry_run:
+                    print(f"[DRY RUN] 📄 Would create file: {new_path}")
+                else:
+                    if not os.path.exists(new_path):
+                        with open(new_path, "w") as f:
+                            pass
+                        print(f"📄 File created: {new_path}")
+                    else:
+                        print(f"📄 File exists (skipped): {new_path}")
 
+        if dry_run:
+            print("\n✅ Dry run completed. No files were created.")
+        else:
+            print("\n✅ Structure merged successfully!")
 
-        while True:
-
-            file = input(f"   Enter file inside '{folder}' (or 'next' to stop): ")
-
-            if file.lower() == "next":
-                break
-
-            file_path = os.path.join(folder_path, file)
-
-            open(file_path, "w").close()
-
-            print("   File created:", file)
-
-
-    print("\n✅ Project structure ready on Desktop!")
+    except PermissionError:
+        print("❌ Permission denied. Try running as administrator or choose another drive.")
+    except Exception as e:
+        print(f"❌ Unexpected error occurred: {e}")
 
 
 if __name__ == "__main__":
-    create_project()
+    parser = argparse.ArgumentParser(description="Project Structure Generator")
+    parser.add_argument("--file", default="structure.txt", help="Path to structure file")
+    parser.add_argument("--drive", default="D:\\", help="Drive or base path")
+    parser.add_argument("--dry-run", action="store_true", help="Preview without creating files")
+
+    args = parser.parse_args()
+
+    create_structure_from_file(args.file, args.drive, args.dry_run)
